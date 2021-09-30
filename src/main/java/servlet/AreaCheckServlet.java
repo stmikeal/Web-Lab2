@@ -31,15 +31,18 @@ public class AreaCheckServlet extends HttpServlet {
         Double y = null;
         Integer r = null;
 //        Integer time = null;
+        System.out.println("Start checked");
 
         try {
-            x = Double.parseDouble(request.getParameter("x").trim());
+            x = Double.parseDouble(request.getParameter("x").trim().replaceAll(",", "."));
+            System.out.println("parsed x = " + x);
         } catch (NumberFormatException e) {
             System.out.println("Failed while parsing x.\n Redirected to controller without x-parameter");
             response.sendRedirect("/controller");
         }
         try {
-            y = Double.parseDouble(request.getParameter("y").trim());
+            y = Double.parseDouble(request.getParameter("y").trim().replaceAll(",", "."));
+            System.out.println("parsed y = " + y);
         } catch (NumberFormatException e) {
             System.out.println("Failed while parsing y.\n Redirected to controller without y-parameter");
             response.sendRedirect("/controller");
@@ -59,9 +62,12 @@ public class AreaCheckServlet extends HttpServlet {
 
         try (PrintWriter out = response.getWriter()) {
             if (x != null && y != null && r != null) {
+                System.out.println("For if");
                 Point point = new Point(x, y, r);
                 justbean.add(point);
                 out.println(JSONConverter.toJSON(point));
+                System.out.println(JSONConverter.toJSON(point));
+                System.out.println("after if");
             }
         }
     }

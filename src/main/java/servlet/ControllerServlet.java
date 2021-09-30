@@ -17,6 +17,7 @@ public class ControllerServlet extends HttpServlet {
         if (x == null || y == null || r == null) {
             request.getServletContext().getRequestDispatcher("/index.jsp").forward(request, response);
         } else {
+            System.out.println("hello world");
             request.getServletContext().getRequestDispatcher("/check_area").forward(request, response);
         }
     }

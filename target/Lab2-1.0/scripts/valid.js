@@ -73,56 +73,92 @@ function clearHistory() {
 	localStorage.clear();
 	historyBrowser.innerHTML = "";
 	movePoint(0, 0, 5);
+	pointsY = [];
+	pointsX = [];
+	pointsHit = [];
+	drawSample();
 }
 
 function onAnswer(res) {
 	$('.button-form').attr('disabled', false);
 	var timer = JSON.stringify(res);
 	var data = JSON.parse(timer);
-	var result = "<b>Проверка точки (" + data.x + "; " + data.y + ")</b><br>";
+	pointsX.push(parseFloat(data.x.replace(",", ".")));
+	pointsY.push(parseFloat(data.y.replace(",", ".")));
+	pointsHit.push(isHit(parseFloat(data.x.replace(",", ".")),parseFloat(data.y.replace(",", "."))));
+	drawSample();
+	var result = "<b>Проверка точки (" + String(parseFloat(data.x.replace(",", "."))).replace(".",",")
+		+ "; " + String(parseFloat(data.y.replace(",", "."))).replace(".",",") + ")</b><br>";
 	result += "<b>Параметр: </b>" + data.r + "<br>";
-	result += "<b>Время отправки: </b>" + data.currentTime + "<br>";
-	result += "<b>Время исполнения: </b>" + (parseFloat(data.scriptTime)*1000).toFixed(2) + " ms<br>";
+	result += "<b>Время отправки: </b>" + data.currentTime.replace("T", " ").substr(0, 19) + "<br>";
+	result += "<b>Время исполнения: </b>" + parseFloat(data.scriptTime) + " ms<br>";
 	result += "<b>Результат: </b>" + data.hit;
 	textwindow.innerHTML = result;
 	localStorage.setItem(localStorage.length, timer);
-	createTableRow(timer)
+	createTableRow(timer);
 }
 
 function createTableRow(data) {
 	data = JSON.parse(data);
 	let result;
 	result = "<tr class='historyTd'>";
-	result += `<td class='historyElem'> Точка: (${data.x}, ${data.y}) </td>`;
+	result += `<td class='historyElem'> Точка: (${String(parseFloat(data.x.replace(",", "."))).replace(".",",")}, 
+		${String(parseFloat(data.y.replace(",", "."))).replace(".",",")}) </td>`;
 	result += `<td class='historyElem'> Параметр: ${data.r} </td>`;
-	result += `<td class='historyElem'> Отправка: ${data.currentTime} </td>`;
-	result += `<td class='historyElem'> Исполнение: ${(parseFloat(data.scriptTime)*1000).toFixed(2)} ms</td>`;
+	result += `<td class='historyElem'> Отправка: ${data.currentTime.replace("T", " ").substr(0, 19)} </td>`;
+	result += `<td class='historyElem'> Исполнение: ${(parseFloat(data.scriptTime))} ms</td>`;
 	result += `<td class='historyElem'> Результат: ${data.hit} </td>`;
-	result += "</tr>"
+	result += "</tr>";
 	historyBrowser.innerHTML = result + historyBrowser.innerHTML;
 }
 
+let pointsX = [];
+let pointsY = [];
+let pointsHit = [];
+
 function loadTable() {
 	for (let i = 0; i < localStorage.length; i++) {
-		createTableRow(localStorage.getItem(i))
+		createTableRow(localStorage.getItem(i));
+		let data = JSON.parse(localStorage.getItem(i));
+		pointsX.push(parseFloat(data.x.replace(",", ".")));
+		pointsY.push(parseFloat(data.y.replace(",", ".")));
+		pointsHit.push(isHit(pointsX[i], pointsY[i]));
 	}
 }
 
 loadTable()
 
-function startPHP() {
-	var x = xtextinput.value;
-	var y = ytextinput.value;
-	var r = false;
-	if (rcheckbox1.checked) r = "1";
-	if (rcheckbox2.checked) r = "2";
-	if (rcheckbox3.checked) r = "3";
-	if (rcheckbox4.checked) r = "4";
-	if (rcheckbox5.checked) r = "5";
+let graphic = document.querySelector("#graph");
+graphic.onclick = function(event) {
+	let rect = graphic.getBoundingClientRect();
+	let r = false;
+	if (rcheckbox1.checked) r = 1;
+	if (rcheckbox2.checked) r = 2;
+	if (rcheckbox3.checked) r = 3;
+	if (rcheckbox4.checked) r = 4;
+	if (rcheckbox5.checked) r = 5;
+	if (event.clientX - rect.x < rect.width && event.clientY - rect.y < rect.height && r) {
+		let valueX = ((event.clientX - rect.x - rect.width/2)*r*3)/(rect.width);
+		let valueY = -((event.clientY - rect.y - rect.height/2)*r*3)/(rect.height);
+		if (valueX >= -3 && valueX <= 5 && valueY >= -3 && valueY <= 5)
+			startPHP("",String(valueX).replace(".", ",").substr(0, 8),
+				String(valueY).replace(".", ",").substr(0, 8),
+				String(r));
+	}
+}
+
+function startPHP(event, x = xtextinput.value, y = ytextinput.value, r = false) {
+	if (!r) {
+		if (rcheckbox1.checked) r = "1";
+		if (rcheckbox2.checked) r = "2";
+		if (rcheckbox3.checked) r = "3";
+		if (rcheckbox4.checked) r = "4";
+		if (rcheckbox5.checked) r = "5";
+	}
 	if (x&&y&&r) {
 		$.ajax({
 			type: "GET",
-			url: "scripts/input.php",
+			url: "controller",
 			data: {
 				"x": x,
 				"y": y,
@@ -146,15 +182,18 @@ function startPHP() {
 
 
 
-
 let colorStroke = "#ACBECE";
 let colorFill = "#8C9EAE";
 let colorGraphStroke = "rgba(0,0,0,0)";
 let colorGraphFill = "rgba(115, 213, 131, 0.5)";
-let colorGreenStroke = "rgba(115, 213, 131, 0.5)s";
+let colorGreenStroke = "rgba(115, 213, 131, 0.5)";
 let colorGreenFill = "rgba(112,255,64, 0)";
-let colorPointStroke = "#AC7140";
-let colorPointFill = "#E57C25";
+let colorPointStroke = "#FFD900";
+let colorPointFill = "#FFD900";
+let colorGoalStroke = "rgba(115, 213, 131, 1)";
+let colorGoalFill = "rgba(112,255,64, 1)";
+let colorMissStroke = "#AC7140";
+let colorMissFill = "#E57C25";
 
 var elem = document.getElementById("graph");
 var ctx = elem.getContext('2d');
@@ -162,7 +201,12 @@ var small = 5;
 var big = 15;
 let basicX = 0;
 let basicY = 0;
-let basicR = 5;
+var basicR = 5;
+
+function isHit(x, y) {
+	return (x <= 0 && y <= 0 && x + y * 2 + basicR >= 0)||(x <= 0 && y >= 0 && x * x + y * y <= basicR * basicR)||(x >= 0 && y <= 0 && x * 2 <= basicR && y >= -basicR);
+}
+
 
 drawSample();
 changeR(5);
@@ -284,6 +328,25 @@ function drawSample(x = basicX, y = basicY, r = basicR) {
 		ctx.fill();
 		ctx.stroke();
 	ctx.closePath();
+	/*
+		Old points draw
+	 */
+	for (let i = 0; i < pointsX.length; i++) {
+		let thisx = elem.width/2 + (pointsX[i]/r)*elem.width/3;
+		let thisy = elem.height/2 - (pointsY[i]/r)*elem.height/3
+		if (pointsHit[i]) {
+			ctx.fillStyle = colorGoalFill;
+			ctx.strokeStyle = colorGoalStroke;
+		} else {
+			ctx.fillStyle = colorMissFill;
+			ctx.strokeStyle = colorMissStroke;
+		}
+		ctx.beginPath();
+			ctx.arc(thisx, thisy, 4, 0, 2*Math.PI, true);
+			ctx.fill();
+			ctx.stroke();
+		ctx.closePath();
+	}
 }
 
 function changeR(r) {

@@ -12,7 +12,7 @@ public class Point implements Serializable {
     private final double y;
     private final int r;
     private final LocalDateTime time;
-    private final long script_time;
+    private long script_time;
     private final boolean hit;
 
     public Point(double x, double y, int r) {
@@ -24,6 +24,7 @@ public class Point implements Serializable {
         this.time = LocalDateTime.now();
         this.hit = checkHit();
         this.script_time = System.currentTimeMillis() - startTime;
+        this.script_time = this.script_time < 5 ? 5 : this.script_time;
     }
 
     private boolean checkTriangle() {

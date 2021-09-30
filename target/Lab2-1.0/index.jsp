@@ -36,7 +36,7 @@
 				</center>
 			</td>
 			<td id="content-form">
-				<form id="input-form" action="" method="POST">
+				<form id="input-form">
 					<fieldset>
 						<legend><span id="legend-text">Проверьте вашу точку</span></legend>
 						<table>
@@ -143,7 +143,7 @@
 			</td>
 		</tr>
 	</table>
-	<script src="scripts/valid.js"></script>
+	<script src="scripts/valid.js?v=26"></script>
 	<script src="scripts/graph.js"></script>
 </body>
 
